@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sync-box-files-to-s3
+
+  Sample SAM Template for sync-box-files-to-s3
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  LambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: layer
+      ContentUri: ./layers
+      CompatibleRuntimes:
+        - python3.12
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BoxSyncLambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BoxSyncLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                Resource: arn:aws:s3:::box-synced-files-bucket/*
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:UpdateItem
+                Resource: arn:aws:dynamodb:us-west-2:850996990652:table/ItemTable
+  BoxSyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: box_connector.main.lambda_handler
+      Runtime: python3.12
+      Timeout: 900 # 15 minutes
+      MemorySize: 1024
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers:
+        - !Ref LambdaLayer  
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: "box-synced-files-bucket"
+          ITEM_TABLE: "ItemTable"
+          BOX_CLIENT_ID: "nrlnavdyfy6gwvnr1859jvjzvxlka3wv"
+          BOX_CLIENT_SECRET: "MXGTVKlDA9drY4JBp1TYWQr2MI9ettEA"
+          BOX_DEVELOPER_TOKEN: "LkSQDzcwvPrOtC961bGtcxgftgi70E0l"
+          BOX_USER_ID: "36423181377"
+          BOX_FOLDER_ID: "301173378837"
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: "rate(1 hour)"

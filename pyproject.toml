@@ -5,7 +5,14 @@ description = "Add your description here"
 authors = [
     { name = "y-mae-dev", email = "youyiqianye061@gmail.com" }
 ]
-dependencies = []
+dependencies = [
+    "boto3>=1.35.91",
+    "box-sdk-gen>=1.9.0",
+    "pynamodb>=6.0.1",
+    "aws-lambda-powertools>=3.4.0",
+    "pip>=24.3.1",
+    "boxsdk>=3.13.0",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 

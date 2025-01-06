@@ -1,0 +1,5 @@
+boto3
+box-sdk-gen
+boxsdk
+aws-lambda-powertools
+pynamodb
